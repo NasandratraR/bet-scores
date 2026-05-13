@@ -107,13 +107,71 @@ function fillSelects() {
   refSel.value = 'London Reds';
   resetTeams();
 
-  refSel.addEventListener('change', resetTeams);
+  refSel.addEventListener('change', () => {
+    resetTeams();
+    renderGoalsGrid(cachedMatches);
+    updateAvailableTeams(cachedMatches);
+    checkFirstLeg();
+  });
+
+  document.getElementById('team_home').addEventListener('change', checkFirstLeg);
+  document.getElementById('team_away').addEventListener('change', checkFirstLeg);
 }
 
 function resetTeams() {
   const ref = document.getElementById('team_ref').value;
   document.getElementById('team_home').value = ref;
   document.getElementById('team_away').value = ref;
+}
+
+function getExhaustedTeams(matches, refTeam) {
+  if (!refTeam) return new Set();
+  const counts = {};
+  matches.forEach(m => {
+    if (m.team_home === refTeam || m.team_away === refTeam) {
+      const opponent = m.team_home === refTeam ? m.team_away : m.team_home;
+      counts[opponent] = (counts[opponent] || 0) + 1;
+    }
+  });
+  return new Set(Object.entries(counts).filter(([, c]) => c >= 2).map(([t]) => t));
+}
+
+function checkFirstLeg() {
+  const home = document.getElementById('team_home').value;
+  const away = document.getElementById('team_away').value;
+  const info = document.getElementById('firstLegInfo');
+
+  if (!home || !away || home === away) {
+    info.classList.add('hidden');
+    return;
+  }
+
+  const firstLeg = cachedMatches.find(m =>
+    (m.team_home === home && m.team_away === away) ||
+    (m.team_home === away && m.team_away === home)
+  );
+
+  if (firstLeg) {
+    info.innerHTML = `⚽ Match aller — <strong>${escHtml(firstLeg.team_home)} ${firstLeg.score_home} – ${firstLeg.score_away} ${escHtml(firstLeg.team_away)}</strong>`;
+    info.classList.remove('hidden');
+  } else {
+    info.classList.add('hidden');
+  }
+}
+
+function updateAvailableTeams(matches) {
+  const ref       = document.getElementById('team_ref').value;
+  const exhausted = getExhaustedTeams(matches, ref);
+
+  ['team_home', 'team_away'].forEach(id => {
+    const sel = document.getElementById(id);
+    Array.from(sel.options).forEach(opt => {
+      if (!opt.value || opt.value === ref) return;
+      opt.disabled = exhausted.has(opt.value);
+    });
+    // Si la valeur sélectionnée est épuisée, revenir à la référence
+    if (exhausted.has(sel.value)) sel.value = ref;
+  });
 }
 
 function resetForm() {
@@ -125,7 +183,8 @@ function resetForm() {
   sel.value = String(next);
 }
 
-let journeeReady = false;
+let journeeReady   = false;
+let cachedMatches  = [];
 
 function updateSaisonLabel(val) {
   const label = document.getElementById('saisonLabel');
@@ -182,11 +241,112 @@ async function loadMatches() {
     matchBody.innerHTML = '';
     emptyMsg.style.display = 'block';
     setDefaultJournee(data);
+    renderStats(data);
+    renderGoalsGrid(data);
+    updateAvailableTeams(data);
     return;
   }
   emptyMsg.style.display = 'none';
   matchBody.innerHTML = data.map(renderRow).join('');
   setDefaultJournee(data);
+  cachedMatches = data;
+  renderStats(data);
+  renderGoalsGrid(data);
+  updateAvailableTeams(data);
+}
+
+function renderStats(matches) {
+  const container = document.getElementById('statsGoals');
+  if (matches.length === 0) {
+    container.innerHTML = '<p class="stats-empty">Aucune donnée disponible.</p>';
+    return;
+  }
+
+  const nextJournee = Number(document.getElementById('journee').value) || 1;
+
+  // Compter et trouver la dernière journée par total de buts
+  const counts    = {};
+  const lastSeen  = {};
+  matches.forEach(m => {
+    const total = Number(m.score_home) + Number(m.score_away);
+    counts[total]   = (counts[total] || 0) + 1;
+    const j = Number(m.journee) || 0;
+    if (!lastSeen[total] || j > lastSeen[total]) lastSeen[total] = j;
+  });
+
+  const rows = [];
+  for (let i = 0; i <= 6; i++) {
+    const count    = counts[i] || 0;
+    const pct      = Math.round((count / matches.length) * 100);
+    const last     = lastSeen[i];
+    const interval = last != null ? nextJournee - last - 1 : null;
+    rows.push({ goals: i, count, pct, interval });
+  }
+
+  const sort = document.getElementById('statSort').value;
+  if (sort === 'interval') {
+    rows.sort((a, b) => {
+      if (a.interval === null) return 1;
+      if (b.interval === null) return -1;
+      return b.interval - a.interval;
+    });
+  } else if (sort === 'goals') {
+    rows.sort((a, b) => b.count - a.count);
+  }
+
+  container.innerHTML = rows.map(r => `
+    <div class="stat-row">
+      <span class="stat-label">${r.goals}</span>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar" style="width:${r.pct}%">
+          ${r.pct > 0 ? `<span class="stat-pct-in">${r.pct}%</span>` : ''}
+        </div>
+      </div>
+      <span class="stat-count">${r.count} match${r.count > 1 ? 's' : ''}</span>
+      <span class="stat-interval">${r.interval !== null ? `(il y a ${r.interval} inter.)` : '—'}</span>
+    </div>`
+  ).join('');
+}
+
+function renderGoalsGrid(matches) {
+  const container = document.getElementById('goalsGrid');
+  if (matches.length === 0) {
+    container.innerHTML = '<p class="stats-empty">Aucune donnée disponible.</p>';
+    return;
+  }
+
+  // Grouper les journées par total de buts
+  const groups = {};
+  for (let i = 0; i <= 6; i++) groups[i] = [];
+  matches.forEach(m => {
+    const total = Number(m.score_home) + Number(m.score_away);
+    if (total <= 6 && m.journee) groups[total].push(Number(m.journee));
+  });
+  for (let i = 0; i <= 6; i++) groups[i].sort((a, b) => a - b);
+
+  const maxRows   = Math.max(...Object.values(groups).map(g => g.length));
+  const teamName  = document.getElementById('team_ref').value || 'Équipe';
+  const maxJournee = Math.max(...matches.map(m => Number(m.journee) || 0));
+
+  let html = `<table class="goals-grid-table">
+    <thead>
+      <tr><th colspan="7" class="goals-grid-title">${escHtml(teamName)}</th></tr>
+      <tr>${[0,1,2,3,4,5,6].map(i => `<th class="goals-grid-col">${i}</th>`).join('')}</tr>
+    </thead>
+    <tbody>`;
+
+  for (let r = 0; r < maxRows; r++) {
+    html += '<tr>';
+    for (let c = 0; c <= 6; c++) {
+      const val     = groups[c][r];
+      const isLast  = val === maxJournee;
+      html += `<td class="goals-grid-cell${isLast ? ' goals-grid-last' : ''}">${val != null ? val : ''}</td>`;
+    }
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
 }
 
 function setDefaultJournee(matches) {
@@ -226,6 +386,7 @@ form.addEventListener('submit', async e => {
     if (!res.ok) { showMsg(data.error, 'error'); return; }
     showMsg('Match enregistré avec succès !', 'success');
     resetForm();
+    document.getElementById('firstLegInfo').classList.add('hidden');
     loadMatches();
   } catch {
     showMsg('Erreur de connexion au serveur.', 'error');
@@ -326,3 +487,5 @@ document.getElementById('editForm').addEventListener('submit', async e => {
 initSaison();
 fillSelects();
 loadMatches();
+
+document.getElementById('statSort').addEventListener('change', () => renderStats(cachedMatches));

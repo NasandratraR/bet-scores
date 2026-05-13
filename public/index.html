@@ -43,7 +43,10 @@
 
         <!-- Formulaire de saisie -->
         <section class="card form-card">
-          <h2>Nouveau match</h2>
+          <div class="form-card-header">
+            <h2>Nouveau match</h2>
+            <div id="firstLegInfo" class="first-leg-info hidden"></div>
+          </div>
           <form id="matchForm">
 
             <div class="field journee-field">
@@ -85,10 +88,7 @@
           </form>
         </section>
 
-      </div><!-- /col-left -->
-
-      <!-- COLONNE DROITE -->
-      <div class="col-right">
+        <!-- Résultats enregistrés -->
         <section class="card results-card">
           <div class="table-header">
             <h2>Résultats enregistrés</h2>
@@ -111,6 +111,29 @@
             </table>
             <p id="emptyMsg" class="empty">// AUCUN MATCH ENREGISTRÉ</p>
           </div>
+        </section>
+
+      </div><!-- /col-left -->
+
+      <!-- COLONNE DROITE -->
+      <div class="col-right">
+        <!-- Stats buts -->
+        <section class="card stats-card">
+          <div class="stats-header">
+            <h2>Total de buts par match</h2>
+            <select id="statSort" class="stats-sort">
+              <option value="default">-- Trier par --</option>
+              <option value="goals">Nombre de buts</option>
+              <option value="interval">Intervalle</option>
+            </select>
+          </div>
+          <div id="statsGoals"></div>
+        </section>
+
+        <!-- Tableau journées par total de buts -->
+        <section class="card goals-grid-card">
+          <h2>Répartition buts</h2>
+          <div id="goalsGrid"></div>
         </section>
       </div><!-- /col-right -->
 

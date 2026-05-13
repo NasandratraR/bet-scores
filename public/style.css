@@ -69,7 +69,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 1.2rem 1rem; }
 }
 .col-left  { display: flex; flex-direction: column; gap: 1rem; }
 .col-right { position: sticky; top: 1rem; }
-.results-card { height: calc(100vh - 130px); display: flex; flex-direction: column; }
+.results-card { height: calc(100vh - 200px); display: flex; flex-direction: column; }
 .results-card .table-wrap { flex: 1; overflow-y: auto; }
 
 @media (max-width: 900px) {
@@ -120,6 +120,23 @@ main { max-width: 1400px; margin: 0 auto; padding: 1.2rem 1rem; }
 }
 .ref-row select { max-width: 200px; }
 
+.form-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.form-card-header h2 { margin-bottom: 0; }
+.first-leg-info {
+  font-size: .78rem;
+  color: var(--muted);
+  background: #fff8e6;
+  border: 1px solid #f0c040;
+  border-radius: 4px;
+  padding: .3rem .7rem;
+}
+.first-leg-info strong { color: var(--text); }
+
 /* ── FORMULAIRE ── */
 .match-row {
   display: flex;
@@ -151,6 +168,7 @@ select:focus, input:focus {
   box-shadow: 0 0 0 3px rgba(58, 180, 58, 0.12);
 }
 select option { background: #fff; color: var(--text); }
+select option:disabled { color: #ccc; }
 
 /* ── SCORE ── */
 .score-block { display: flex; align-items: center; gap: .4rem; }
@@ -305,6 +323,44 @@ tbody td { padding: .55rem .7rem; }
 }
 .btn-del:hover { border-color: var(--red); color: var(--red); }
 
+/* ── GOALS GRID ── */
+.goals-grid-card { padding: .8rem 1rem; margin-top: 1rem; }
+.goals-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+}
+.goals-grid-title {
+  background: var(--green);
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  padding: .4rem;
+  font-size: .85rem;
+}
+.goals-grid-col {
+  background: #f7f9fb;
+  color: var(--text);
+  font-weight: 700;
+  text-align: center;
+  padding: .35rem .2rem;
+  border: 1px solid var(--border);
+  width: calc(100% / 7);
+}
+.goals-grid-cell {
+  text-align: center;
+  padding: .3rem .2rem;
+  border: 1px solid #f0f2f5;
+  color: #3a9fd4;
+  font-weight: 600;
+  font-size: .8rem;
+  min-height: 24px;
+}
+.goals-grid-last {
+  color: var(--green-dk);
+  font-weight: 800;
+}
+
 .td-actions { display: flex; gap: .3rem; align-items: center; }
 .btn-edit-row {
   background: none;
@@ -359,6 +415,89 @@ tbody td { padding: .55rem .7rem; }
   transition: all .15s;
 }
 .modal-close:hover { background: #f0f2f5; color: var(--text); }
+
+/* ── STATS ── */
+.stats-card { padding: 1rem 1.2rem; }
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.stats-header h2 { margin-bottom: 0; }
+.stats-sort {
+  width: auto;
+  font-size: .75rem;
+  padding: .3rem .6rem;
+  color: var(--muted);
+  border-color: var(--border);
+  cursor: pointer;
+}
+.stats-empty { color: var(--muted); font-size: .82rem; text-align: center; padding: .5rem 0; }
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .45rem;
+}
+.stat-label {
+  width: 18px;
+  text-align: right;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.stat-bar-wrap {
+  flex: 1;
+  background: #f0f2f5;
+  border-radius: 0;
+  height: 26px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+}
+.stat-bar {
+  background: #87ceeb;
+  border-right: 3px solid #3a9fd4;
+  border-radius: 0;
+  height: 100%;
+  transition: width .4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.stat-pct-in {
+  font-size: .72rem;
+  font-weight: 700;
+  color: #1a6fa0;
+  white-space: nowrap;
+}
+.stat-pct-out {
+  display: none;
+  margin-left: .3rem;
+}
+.stat-count {
+  font-size: .72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  width: 58px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.stat-interval {
+  font-size: .72rem;
+  font-weight: 600;
+  color: #e07b00;
+  white-space: nowrap;
+  width: 110px;
+  text-align: right;
+  flex-shrink: 0;
+}
 
 .td-saison { font-size: .75rem; color: var(--muted); white-space: nowrap; }
 .td-journee { font-weight: 700; font-size: .8rem; color: var(--green-dk); white-space: nowrap; }
