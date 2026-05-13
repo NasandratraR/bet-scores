@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BET SCORES — Saisie de résultats</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">⚽ <span>BET</span>SCORES</div>
+      <div class="header-sub">English League — Saisie des résultats</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="layout">
+
+      <!-- COLONNE GAUCHE -->
+      <div class="col-left">
+
+        <!-- Saison en cours -->
+        <section class="card season-card">
+          <div class="season-row">
+            <label for="saison">Saison en cours</label>
+            <input id="saison" type="text" placeholder="ex : 2024-2025" />
+            <button type="button" id="btnEditSaison" class="btn-edit hidden" title="Modifier">✏️</button>
+            <button type="button" id="btnFinirSaison" class="btn-finir hidden">⛔ Finir la saison</button>
+          </div>
+        </section>
+
+        <!-- Équipe de référence -->
+        <section class="card ref-card">
+          <div class="ref-row">
+            <label for="team_ref">Équipe de référence</label>
+            <select id="team_ref">
+              <option value="">-- Aucune --</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Formulaire de saisie -->
+        <section class="card form-card">
+          <h2>Nouveau match</h2>
+          <form id="matchForm">
+
+            <div class="field journee-field">
+              <label for="journee">Journée</label>
+              <select id="journee" required>
+                <option value="">-- Choisir --</option>
+              </select>
+            </div>
+
+            <div class="match-row">
+              <div class="field">
+                <label for="team_home">Équipe domicile</label>
+                <select id="team_home" required>
+                  <option value="">-- Choisir --</option>
+                </select>
+              </div>
+
+              <div class="score-block">
+                <select id="score_home" required>
+                  <option value="">-</option>
+                </select>
+                <span class="vs">VS</span>
+                <select id="score_away" required>
+                  <option value="">-</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="team_away">Équipe extérieur</label>
+                <select id="team_away" required>
+                  <option value="">-- Choisir --</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="formMsg" class="msg hidden"></div>
+
+            <button type="submit">⚽ Enregistrer le match</button>
+          </form>
+        </section>
+
+      </div><!-- /col-left -->
+
+      <!-- COLONNE DROITE -->
+      <div class="col-right">
+        <section class="card results-card">
+          <div class="table-header">
+            <h2>Résultats enregistrés</h2>
+            <span id="saisonLabel" class="saison-label hidden"></span>
+            <span id="matchCount" class="badge">0</span>
+          </div>
+          <div id="tableWrap" class="table-wrap">
+            <table id="matchTable">
+              <thead>
+                <tr>
+                  <th>J.</th>
+                  <th>Domicile</th>
+                  <th class="score-col">Score</th>
+                  <th>Extérieur</th>
+                  <th>Résultat</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="matchBody"></tbody>
+            </table>
+            <p id="emptyMsg" class="empty">// AUCUN MATCH ENREGISTRÉ</p>
+          </div>
+        </section>
+      </div><!-- /col-right -->
+
+    </div><!-- /layout -->
+  </main>
+
+  <!-- Modale édition -->
+  <div id="editModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Modifier le match</h3>
+        <button type="button" id="modalClose" class="modal-close">✕</button>
+      </div>
+      <form id="editForm">
+        <input type="hidden" id="editId" />
+
+        <div class="field journee-field">
+          <label for="editJournee">Journée</label>
+          <select id="editJournee" required>
+            <option value="">-- Choisir --</option>
+          </select>
+        </div>
+
+        <div class="match-row">
+          <div class="field">
+            <label for="editTeamHome">Équipe domicile</label>
+            <select id="editTeamHome" required>
+              <option value="">-- Choisir --</option>
+            </select>
+          </div>
+
+          <div class="score-block">
+            <select id="editScoreHome" required>
+              <option value="">-</option>
+            </select>
+            <span class="vs">VS</span>
+            <select id="editScoreAway" required>
+              <option value="">-</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="editTeamAway">Équipe extérieur</label>
+            <select id="editTeamAway" required>
+              <option value="">-- Choisir --</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="editMsg" class="msg hidden"></div>
+
+        <button type="submit">💾 Sauvegarder</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
