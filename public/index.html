@@ -12,6 +12,11 @@
     <div class="header-inner">
       <div class="logo">⚽ <span>BET</span>SCORES</div>
       <div class="header-sub">English League — Saisie des résultats</div>
+      <nav class="header-nav">
+        <a href="index.html" class="nav-link active">Saisie</a>
+        <a href="historique.html" class="nav-link">Historique</a>
+        <a href="/bet/index.html" target="_blank" class="nav-link">Calcul</a>
+      </nav>
     </div>
   </header>
 
@@ -58,7 +63,7 @@
 
             <div class="match-row">
               <div class="field">
-                <label for="team_home">Équipe domicile</label>
+                <label for="team_home">Équipe domicile <span id="levelHome" class="level-badge hidden"></span></label>
                 <select id="team_home" required>
                   <option value="">-- Choisir --</option>
                 </select>
@@ -75,7 +80,7 @@
               </div>
 
               <div class="field">
-                <label for="team_away">Équipe extérieur</label>
+                <label for="team_away">Équipe extérieur <span id="levelAway" class="level-badge hidden"></span></label>
                 <select id="team_away" required>
                   <option value="">-- Choisir --</option>
                 </select>
@@ -94,6 +99,7 @@
             <h2>Résultats enregistrés</h2>
             <span id="saisonLabel" class="saison-label hidden"></span>
             <span id="matchCount" class="badge">0</span>
+            <button type="button" id="btnDelJournee" class="btn-del-journee">🗑 Supprimer tout</button>
           </div>
           <div id="tableWrap" class="table-wrap">
             <table id="matchTable">
@@ -104,6 +110,7 @@
                   <th class="score-col">Score</th>
                   <th>Extérieur</th>
                   <th>Résultat</th>
+                  <th class="score-col">Buts</th>
                   <th></th>
                 </tr>
               </thead>
@@ -132,13 +139,48 @@
 
         <!-- Tableau journées par total de buts -->
         <section class="card goals-grid-card">
-          <h2>Répartition buts</h2>
+          <div class="goals-grid-header">
+            <h2>Répartition buts</h2>
+            <button type="button" id="btnResume" class="btn-resume">📊 Résumé</button>
+            <button type="button" id="btnButsEquipes" class="btn-resume">⚽ Buts / Équipes</button>
+          </div>
           <div id="goalsGrid"></div>
         </section>
+        <!-- Historique buts équipe adverse -->
+        <section class="card team-history-card hidden" id="teamHistoryCard">
+          <div class="team-history-header">
+            <h2>Historique buts</h2>
+            <span id="teamHistoryName" class="team-history-badge"></span>
+          </div>
+          <div id="teamHistoryGoals"></div>
+        </section>
+
       </div><!-- /col-right -->
 
     </div><!-- /layout -->
   </main>
+
+  <!-- Modale buts / équipes -->
+  <div id="butsModal" class="modal-overlay hidden">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h3 id="butsTitle">Buts par équipe</h3>
+        <button type="button" id="butsClose" class="modal-close">✕</button>
+      </div>
+      <div id="butsBody"></div>
+    </div>
+  </div>
+
+  <!-- Modale résumé -->
+  <div id="resumeModal" class="modal-overlay hidden">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h3 id="resumeTitle">Résumé de la saison</h3>
+        <button type="button" id="resumeClose" class="modal-close">✕</button>
+      </div>
+      <div id="resumeBody"></div>
+    </div>
+  </div>
 
   <!-- Modale édition -->
   <div id="editModal" class="modal-overlay hidden">

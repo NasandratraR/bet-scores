@@ -1,5 +1,34 @@
 const API = '/api/matches';
 
+const TEAM_LEVELS = {
+  fort:  ['London Reds','Manchester Blue','Liverpool','Newcastle','London Blues','Fulham','Brentford'],
+  moyen: ['Brighton','C Palace','A. Villa','Manchester Red','Bournemouth','Spurs','Wolverhampton'],
+  faible:['Everton','Burnley','Leeds','Sunderlands','West Ham','N Forest'],
+};
+
+const LEVEL_META = {
+  fort:   { label: '● Fort',   cls: 'level-fort'   },
+  moyen:  { label: '● Moyen',  cls: 'level-moyen'  },
+  faible: { label: '● Faible', cls: 'level-faible' },
+};
+
+function getTeamLevel(name) {
+  for (const [lvl, teams] of Object.entries(TEAM_LEVELS)) {
+    if (teams.includes(name)) return lvl;
+  }
+  return null;
+}
+
+function updateLevelBadge(teamSelectId, badgeId) {
+  const team  = document.getElementById(teamSelectId).value;
+  const badge = document.getElementById(badgeId);
+  const lvl   = getTeamLevel(team);
+  if (!lvl || !team) { badge.className = 'level-badge hidden'; return; }
+  const meta = LEVEL_META[lvl];
+  badge.textContent = meta.label;
+  badge.className   = `level-badge ${meta.cls}`;
+}
+
 // ── SAISON ──
 function initSaison() {
   const input    = document.getElementById('saison');
@@ -38,11 +67,23 @@ function initSaison() {
   btnEdit.addEventListener('click', unlockSaison);
 
   btnFinir.addEventListener('click', () => {
-    if (!confirm('Confirmer la fin de la saison ? Le nom sera effacé.')) return;
+    if (!confirm('Confirmer la fin de la saison ? Le formulaire sera réinitialisé.')) return;
     localStorage.removeItem('saison_courante');
     input.value = '';
     unlockSaison();
     updateSaisonLabel('');
+
+    // Réinitialisation complète
+    journeeReady = false;
+    cachedMatches = [];
+    document.getElementById('journee').value    = '1';
+    document.getElementById('score_home').value = '0';
+    document.getElementById('score_away').value = '0';
+    document.getElementById('firstLegInfo').classList.add('hidden');
+    document.getElementById('levelHome').className = 'level-badge hidden';
+    document.getElementById('levelAway').className = 'level-badge hidden';
+    resetTeams();
+    loadMatches();
   });
 }
 
@@ -84,7 +125,7 @@ function fillSelects() {
 
   // Journées 1-37
   const journeeSel = document.getElementById('journee');
-  for (let j = 1; j <= 37; j++) {
+  for (let j = 1; j <= 38; j++) {
     const opt = document.createElement('option');
     opt.value = j;
     opt.textContent = `Journée ${j}`;
@@ -112,10 +153,20 @@ function fillSelects() {
     renderGoalsGrid(cachedMatches);
     updateAvailableTeams(cachedMatches);
     checkFirstLeg();
+    document.getElementById('teamHistoryCard').classList.add('hidden');
+    currentHistoryTeam = null;
   });
 
-  document.getElementById('team_home').addEventListener('change', checkFirstLeg);
-  document.getElementById('team_away').addEventListener('change', checkFirstLeg);
+  document.getElementById('team_home').addEventListener('change', () => {
+    checkFirstLeg();
+    updateLevelBadge('team_home', 'levelHome');
+    updateHistoryForNonRefTeam();
+  });
+  document.getElementById('team_away').addEventListener('change', () => {
+    checkFirstLeg();
+    updateLevelBadge('team_away', 'levelAway');
+    updateHistoryForNonRefTeam();
+  });
 }
 
 function resetTeams() {
@@ -178,8 +229,10 @@ function resetForm() {
   resetTeams();
   document.getElementById('score_home').value = '0';
   document.getElementById('score_away').value = '0';
+  updateLevelBadge('team_home', 'levelHome');
+  updateLevelBadge('team_away', 'levelAway');
   const sel = document.getElementById('journee');
-  const next = Math.min(Number(sel.value) + 1, 37);
+  const next = Math.min(Number(sel.value) + 1, 38);
   sel.value = String(next);
 }
 
@@ -208,10 +261,23 @@ function showMsg(text, type) {
   setTimeout(() => { formMsg.className = 'msg hidden'; }, 3500);
 }
 
-function resultLabel(sh, sa) {
-  if (sh > sa) return '<span class="result-badge win">Domicile</span>';
-  if (sh < sa) return '<span class="result-badge loss">Extérieur</span>';
-  return '<span class="result-badge draw">Nul</span>';
+function resultLabel(m) {
+  const ref  = document.getElementById('team_ref').value;
+  const sh   = m.score_home, sa = m.score_away;
+  const draw = sh === sa;
+
+  if (draw) return '<span class="result-badge draw">Nul</span>';
+
+  if (ref && (m.team_home === ref || m.team_away === ref)) {
+    const refWins = (m.team_home === ref && sh > sa) || (m.team_away === ref && sa > sh);
+    return refWins
+      ? '<span class="result-badge win">Gagné</span>'
+      : '<span class="result-badge loss">Perdu</span>';
+  }
+
+  return sh > sa
+    ? '<span class="result-badge win">Domicile</span>'
+    : '<span class="result-badge loss">Extérieur</span>';
 }
 
 function renderRow(m) {
@@ -221,7 +287,8 @@ function renderRow(m) {
       <td><strong>${escHtml(m.team_home)}</strong></td>
       <td class="score-display">${m.score_home} – ${m.score_away}</td>
       <td><strong>${escHtml(m.team_away)}</strong></td>
-      <td>${resultLabel(m.score_home, m.score_away)}</td>
+      <td>${resultLabel(m)}</td>
+      <td class="td-buts">${Number(m.score_home) + Number(m.score_away)}</td>
       <td class="td-actions">
         <button class="btn-edit-row" data-match='${JSON.stringify(m)}'>✏️</button>
         <button class="btn-del" data-id="${m.id}">🗑</button>
@@ -235,7 +302,11 @@ function escHtml(str) {
 
 async function loadMatches() {
   const res  = await fetch(API);
-  const data = await res.json();
+  const all  = await res.json();
+  const saison = localStorage.getItem('saison_courante');
+  const data = saison
+    ? all.filter(m => m.saison === saison)
+    : [];
   matchCount.textContent = data.length;
   if (data.length === 0) {
     matchBody.innerHTML = '';
@@ -355,7 +426,7 @@ function setDefaultJournee(matches) {
   const sel = document.getElementById('journee');
   if (matches.length === 0) { sel.value = '1'; return; }
   const max = Math.max(...matches.map(m => m.journee || 0));
-  sel.value = String(Math.min((max > 0 ? max : 0) + 1, 37));
+  sel.value = String(Math.min((max > 0 ? max : 0) + 1, 38));
 }
 
 form.addEventListener('submit', async e => {
@@ -429,7 +500,7 @@ function fillModalSelects() {
   });
   const jSel = document.getElementById('editJournee');
   if (jSel.options.length <= 1) {
-    for (let j = 1; j <= 37; j++) {
+    for (let j = 1; j <= 38; j++) {
       const opt = document.createElement('option');
       opt.value = j; opt.textContent = `Journée ${j}`;
       jSel.appendChild(opt);
@@ -483,6 +554,209 @@ document.getElementById('editForm').addEventListener('submit', async e => {
   closeEditModal();
   loadMatches();
 });
+
+document.getElementById('btnDelJournee').addEventListener('click', async () => {
+  const saison = document.getElementById('saison').value.trim();
+  if (!saison) { alert('Aucune saison en cours définie.'); return; }
+  if (!confirm(`Supprimer TOUS les matchs de la saison "${saison}" ?`)) return;
+  const res  = await fetch(`${API}/saison/${encodeURIComponent(saison)}`, { method: 'DELETE' });
+  const data = await res.json();
+  if (res.ok) loadMatches();
+  else alert(data.error);
+});
+
+// ── MODAL RÉSUMÉ ──
+// ── MODAL BUTS / ÉQUIPES ──
+document.getElementById('btnButsEquipes').addEventListener('click', () => {
+  const ref = document.getElementById('team_ref').value;
+  if (!ref) { alert('Sélectionnez une équipe de référence.'); return; }
+
+  // Grouper par total de buts
+  const groups = {};
+  for (let i = 0; i <= 6; i++) groups[i] = [];
+
+  cachedMatches.forEach(m => {
+    if (m.team_home !== ref && m.team_away !== ref) return;
+    const total    = Number(m.score_home) + Number(m.score_away);
+    const opponent = m.team_home === ref ? m.team_away : m.team_home;
+    const leg      = m.team_home === ref ? 'Dom.' : 'Ext.';
+    if (total <= 6) groups[total].push({ opponent, leg, journee: m.journee });
+  });
+
+  const levelTag = (name) => {
+    const lvl = getTeamLevel(name);
+    if (!lvl) return '';
+    const map = { fort: ['level-fort','Ft'], moyen: ['level-moyen','Mo'], faible: ['level-faible','Fb'] };
+    const [cls, label] = map[lvl];
+    return `<span class="level-badge ${cls}" style="font-size:.58rem;padding:.06rem .28rem">${label}</span>`;
+  };
+
+  const cols = [0,1,2,3,4,5,6].map(i => `
+    <div class="buts-col">
+      <div class="buts-col-header">${i} but${i > 1 ? 's' : ''} <span class="buts-count">${groups[i].length}</span></div>
+      ${groups[i].length === 0
+        ? '<p class="resume-empty">—</p>'
+        : groups[i].map(e => `
+          <div class="buts-row">
+            <span class="buts-team">${escHtml(e.opponent)} ${levelTag(e.opponent)}</span>
+            <span class="buts-leg">${e.leg}</span>
+            <span class="resume-j">J${e.journee || '?'}</span>
+          </div>`).join('')
+      }
+    </div>`).join('');
+
+  document.getElementById('butsTitle').textContent = `Buts par équipe — ${ref}`;
+  document.getElementById('butsBody').innerHTML = `<div class="buts-cols">${cols}</div>`;
+  document.getElementById('butsModal').classList.remove('hidden');
+});
+
+document.getElementById('butsClose').addEventListener('click', () => {
+  document.getElementById('butsModal').classList.add('hidden');
+});
+document.getElementById('butsModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+});
+
+document.getElementById('btnResume').addEventListener('click', () => {
+  const ref = document.getElementById('team_ref').value;
+  if (!ref) { alert('Sélectionnez une équipe de référence.'); return; }
+
+  const gagnes = [], nuls = [], perdus = [];
+
+  cachedMatches.forEach(m => {
+    if (m.team_home !== ref && m.team_away !== ref) return;
+    const opponent = m.team_home === ref ? m.team_away : m.team_home;
+    const sh = Number(m.score_home), sa = Number(m.score_away);
+    const score = `${sh}–${sa}`;
+    const leg   = m.team_home === ref ? 'Domicile' : 'Extérieur';
+    const entry = { opponent, score, leg, journee: m.journee };
+
+    if (sh === sa)                                       nuls.push(entry);
+    else if ((m.team_home === ref && sh > sa) ||
+             (m.team_away === ref && sa > sh))           gagnes.push(entry);
+    else                                                 perdus.push(entry);
+  });
+
+  const levelTag = (name) => {
+    const lvl = getTeamLevel(name);
+    if (!lvl) return '';
+    const map = { fort: ['level-fort','Fort'], moyen: ['level-moyen','Moy.'], faible: ['level-faible','Faible'] };
+    const [cls, label] = map[lvl];
+    return `<span class="level-badge ${cls}" style="font-size:.62rem;padding:.08rem .3rem">${label}</span>`;
+  };
+
+  const renderGroup = (list) => list.length === 0
+    ? '<p class="resume-empty">Aucun</p>'
+    : list.map(e => `
+        <div class="resume-row">
+          <span class="resume-team">${escHtml(e.opponent)} ${levelTag(e.opponent)}</span>
+          <span class="resume-score">${e.score}</span>
+          <span class="resume-leg">${e.leg}</span>
+          <span class="resume-j">J${e.journee || '?'}</span>
+        </div>`).join('');
+
+  document.getElementById('resumeTitle').textContent = `Résumé — ${ref}`;
+  document.getElementById('resumeBody').innerHTML = `
+    <div class="resume-cols">
+      <div class="resume-section resume-win">
+        <div class="resume-section-title">✔ Victoires (${gagnes.length})</div>
+        ${renderGroup(gagnes)}
+      </div>
+      <div class="resume-section resume-draw">
+        <div class="resume-section-title">— Nuls (${nuls.length})</div>
+        ${renderGroup(nuls)}
+      </div>
+      <div class="resume-section resume-loss">
+        <div class="resume-section-title">✘ Défaites (${perdus.length})</div>
+        ${renderGroup(perdus)}
+      </div>
+    </div>
+  `;
+  document.getElementById('resumeModal').classList.remove('hidden');
+});
+
+document.getElementById('resumeClose').addEventListener('click', () => {
+  document.getElementById('resumeModal').classList.add('hidden');
+});
+document.getElementById('resumeModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+});
+
+// ── HISTORIQUE BUTS ÉQUIPE NON-RÉFÉRENTE ──
+let currentHistoryTeam = null;
+
+async function loadTeamHistory(teamName) {
+  const saison    = localStorage.getItem('saison_courante');
+  const card      = document.getElementById('teamHistoryCard');
+  const container = document.getElementById('teamHistoryGoals');
+  const badge     = document.getElementById('teamHistoryName');
+
+  if (!teamName) {
+    card.classList.add('hidden');
+    currentHistoryTeam = null;
+    return;
+  }
+
+  currentHistoryTeam = teamName;
+  badge.textContent  = teamName;
+  card.classList.remove('hidden');
+  container.innerHTML = '<p class="stats-empty">Chargement…</p>';
+
+  try {
+    const res  = await fetch(`/api/teams/${encodeURIComponent(teamName)}/goals-history`);
+    const data = await res.json();
+    renderTeamHistory(data, saison);
+  } catch {
+    container.innerHTML = '<p class="stats-empty">Erreur de chargement.</p>';
+  }
+}
+
+function renderTeamHistory(rows, currentSaison) {
+  const container = document.getElementById('teamHistoryGoals');
+
+  if (rows.length === 0) {
+    container.innerHTML = '<p class="stats-empty">Aucun historique disponible.</p>';
+    return;
+  }
+
+  // Grouper par saison (ordre d'insertion = ordre SQL ASC)
+  const bySaison = {};
+  rows.forEach(r => {
+    const key = r.saison || 'N/A';
+    if (!bySaison[key]) bySaison[key] = { buts: [], date: r.saison_created_at };
+    bySaison[key].buts.push(r.total_buts);
+  });
+
+  // Ordre décroissant : saison la plus récente en premier
+  container.innerHTML = Object.entries(bySaison).reverse().map(([saison, { buts, date }]) => {
+    const isCurrent = saison === currentSaison;
+    const dateStr   = date ? new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+    return `
+    <div class="th-row${isCurrent ? ' th-row-current' : ''}">
+      <span class="th-saison">${escHtml(saison)} <em class="th-date">(${dateStr})</em>${isCurrent ? ' <span class="th-current-tag">en cours</span>' : ''}</span>
+      <div class="th-buts-list">
+        ${buts.map(b => `<span class="th-but-badge">${b}</span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateHistoryForNonRefTeam() {
+  const ref  = document.getElementById('team_ref').value;
+  const home = document.getElementById('team_home').value;
+  const away = document.getElementById('team_away').value;
+
+  let nonRef = null;
+  if (home && home !== ref) nonRef = home;
+  else if (away && away !== ref) nonRef = away;
+
+  if (nonRef) {
+    if (nonRef !== currentHistoryTeam) loadTeamHistory(nonRef);
+  } else {
+    document.getElementById('teamHistoryCard').classList.add('hidden');
+    currentHistoryTeam = null;
+  }
+}
 
 initSaison();
 fillSelects();

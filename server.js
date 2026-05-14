@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/bet', express.static('/home/nasandratra/Documents/BET'));
 
 const dbConfig = {
   host:     process.env.DB_HOST     || 'localhost',
@@ -27,11 +28,47 @@ async function initDb() {
   console.log('Connecté à MySQL');
 }
 
+// GET /api/saisons — liste les saisons avec stats
+app.get('/api/saisons', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT
+        saison,
+        COUNT(*)                                          AS total,
+        SUM(score_home + score_away)                      AS total_buts,
+        SUM(CASE WHEN score_home > score_away THEN 1 ELSE 0 END) AS domicile,
+        SUM(CASE WHEN score_home < score_away THEN 1 ELSE 0 END) AS exterieur,
+        SUM(CASE WHEN score_home = score_away THEN 1 ELSE 0 END) AS nul,
+        MIN(journee) AS j_min,
+        MAX(journee) AS j_max
+      FROM matches
+      GROUP BY saison
+      ORDER BY MIN(created_at) DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/saisons/:saison/matches — tous les matchs d'une saison
+app.get('/api/saisons/:saison/matches', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM matches WHERE saison = ? ORDER BY journee ASC, created_at ASC',
+      [req.params.saison]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET  /api/matches  — liste tous les matchs
 app.get('/api/matches', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM matches ORDER BY created_at DESC'
+      'SELECT * FROM matches ORDER BY journee DESC, created_at DESC'
     );
     res.json(rows);
   } catch (err) {
@@ -94,6 +131,34 @@ app.put('/api/matches/:id', async (req, res) => {
       [journee ? Number(journee) : null, team_home.trim(), Number(score_home), Number(score_away), team_away.trim(), req.params.id]
     );
     res.json({ message: 'Match modifié.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/teams/:team/goals-history — buts par match (individuel) par saison
+app.get('/api/teams/:team/goals-history', async (req, res) => {
+  try {
+    const team = req.params.team;
+    const [rows] = await pool.query(`
+      SELECT saison, journee,
+        score_home + score_away AS total_buts,
+        MIN(created_at) OVER (PARTITION BY saison) AS saison_created_at
+      FROM matches
+      WHERE team_home = ? OR team_away = ?
+      ORDER BY saison_created_at ASC, journee ASC
+    `, [team, team]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/matches/saison/:saison  — supprime tous les matchs d'une saison
+app.delete('/api/matches/saison/:saison', async (req, res) => {
+  try {
+    const [result] = await pool.query('DELETE FROM matches WHERE saison = ?', [req.params.saison]);
+    res.json({ deleted: result.affectedRows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

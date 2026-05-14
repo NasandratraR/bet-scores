@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BET SCORES — Historique</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">⚽ <span>BET</span>SCORES</div>
+      <div class="header-sub">English League — Historique des saisons</div>
+      <nav class="header-nav">
+        <a href="index.html" class="nav-link">Saisie</a>
+        <a href="historique.html" class="nav-link active">Historique</a>
+        <a href="/bet/index.html" target="_blank" class="nav-link">Calcul</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div id="viewSaisons">
+      <div class="histo-header">
+        <h1 class="histo-title">Historique des saisons</h1>
+      </div>
+      <div id="saisonsList"></div>
+    </div>
+
+    <div id="viewDetail" class="hidden">
+      <div class="histo-header">
+        <button type="button" id="btnBack" class="btn-back">← Retour</button>
+        <h1 class="histo-title" id="detailTitle"></h1>
+        <button type="button" id="btnReactiver" class="btn-reactiver">▶ Remettre en cours</button>
+        <button type="button" id="btnDelSaison" class="btn-del-saison">🗑 Supprimer la saison</button>
+      </div>
+
+      <!-- Résumé stats -->
+      <div class="histo-stats-row" id="detailStats"></div>
+
+      <div class="histo-detail-grid">
+        <!-- Tableau matchs -->
+        <section class="card">
+          <h2>Matchs</h2>
+          <table class="histo-table">
+            <thead>
+              <tr>
+                <th>J.</th>
+                <th>Domicile</th>
+                <th class="center">Score</th>
+                <th>Extérieur</th>
+                <th class="center">Résultat</th>
+                <th class="center">Buts</th>
+              </tr>
+            </thead>
+            <tbody id="detailBody"></tbody>
+          </table>
+        </section>
+
+        <!-- Colonne droite -->
+        <div class="histo-right-col">
+          <!-- Total buts par match -->
+          <section class="card stats-card">
+            <div class="stats-header">
+              <h2>Total de buts par match</h2>
+              <select id="histoSort" class="stats-sort">
+                <option value="default">-- Trier par --</option>
+                <option value="goals">Nombre de buts</option>
+                <option value="interval">Intervalle</option>
+              </select>
+            </div>
+            <div id="histoStatsGoals"></div>
+          </section>
+
+          <!-- Répartition buts -->
+          <section class="card goals-grid-card">
+            <div class="goals-grid-header">
+              <h2>Répartition buts</h2>
+              <button type="button" id="histoBtnResume" class="btn-resume">📊 Résumé</button>
+              <button type="button" id="histoBtnButs" class="btn-resume">⚽ Buts / Équipes</button>
+            </div>
+            <div id="histoGoalsGrid"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modale résumé -->
+  <div id="histoResumeModal" class="modal-overlay hidden">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h3 id="histoResumeTitle">Résumé</h3>
+        <button type="button" id="histoResumeClose" class="modal-close">✕</button>
+      </div>
+      <div id="histoResumeBody"></div>
+    </div>
+  </div>
+
+  <!-- Modale buts / équipes -->
+  <div id="histoButsModal" class="modal-overlay hidden">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h3 id="histoButsTitle">Buts par équipe</h3>
+        <button type="button" id="histoButsClose" class="modal-close">✕</button>
+      </div>
+      <div id="histoButsBody"></div>
+    </div>
+  </div>
+
+  <script src="historique.js"></script>
+</body>
+</html>
