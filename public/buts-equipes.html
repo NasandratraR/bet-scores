@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BET SCORES — Buts par équipe</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">⚽ <span>BET</span>SCORES</div>
+      <div class="header-sub">English League — Buts par équipe</div>
+      <nav class="header-nav">
+        <a href="index.html" class="nav-link">Saisie</a>
+        <a href="buts-equipes.html" class="nav-link active">Buts</a>
+        <a href="repartition.html" class="nav-link">Répartition</a>
+        <a href="vue-tableau.html" class="nav-link">Vue tableau</a>
+        <a href="historique.html" class="nav-link">Historique</a>
+        <a href="/bet/index.html" target="_blank" class="nav-link">Calcul</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="be-toolbar">
+      <h1 class="be-title">Historique buts par équipe</h1>
+      <input type="search" id="beSearch" class="be-search" placeholder="Rechercher une équipe…" />
+      <select id="beSaisonFilter" class="stats-sort be-saison-filter">
+        <option value="">Toutes les saisons</option>
+      </select>
+    </div>
+    <div id="beGrid" class="be-grid"></div>
+  </main>
+
+  <script src="buts-equipes.js"></script>
+</body>
+</html>

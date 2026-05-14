@@ -1,7 +1,7 @@
 const TEAM_LEVELS = {
-  fort:  ['London Reds','Manchester Blue','Liverpool','Newcastle','London Blues','Fulham','Brentford'],
-  moyen: ['Brighton','C Palace','A. Villa','Manchester Red','Bournemouth','Spurs','Wolverhampton'],
-  faible:['Everton','Burnley','Leeds','Sunderlands','West Ham','N Forest'],
+  fort:  ['Manchester Blue','Liverpool','Brighton','London Reds','A. Villa','Manchester Red','C Palace'],
+  moyen: ['Fulham','Bournemouth','Newcastle','West Ham','Brentford','Wolverhampton','N Forest'],
+  faible:['London Blues','Spurs','Burnley','Everton','Sunderlands','Leeds'],
 };
 function getTeamLevel(name) {
   for (const [lvl, teams] of Object.entries(TEAM_LEVELS)) {
@@ -135,8 +135,9 @@ function renderHistoGrid(matches) {
   for (let r = 0; r < maxRows; r++) {
     html += '<tr>';
     for (let c = 0; c <= 6; c++) {
-      const val = groups[c][r];
-      html += `<td class="goals-grid-cell${val === maxJournee ? ' goals-grid-last' : ''}">${val != null ? val : ''}</td>`;
+      const val  = groups[c][r];
+      const dcls = val == null ? '' : val <= 9 ? ' jd-1' : val <= 19 ? ' jd-2' : val <= 29 ? ' jd-3' : ' jd-4';
+      html += `<td class="goals-grid-cell${dcls}${val === maxJournee ? ' goals-grid-last' : ''}">${val != null ? val : ''}</td>`;
     }
     html += '</tr>';
   }

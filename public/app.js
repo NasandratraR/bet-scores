@@ -1,9 +1,9 @@
 const API = '/api/matches';
 
 const TEAM_LEVELS = {
-  fort:  ['London Reds','Manchester Blue','Liverpool','Newcastle','London Blues','Fulham','Brentford'],
-  moyen: ['Brighton','C Palace','A. Villa','Manchester Red','Bournemouth','Spurs','Wolverhampton'],
-  faible:['Everton','Burnley','Leeds','Sunderlands','West Ham','N Forest'],
+  fort:  ['Manchester Blue','Liverpool','Brighton','London Reds','A. Villa','Manchester Red','C Palace'],
+  moyen: ['Fulham','Bournemouth','Newcastle','West Ham','Brentford','Wolverhampton','N Forest'],
+  faible:['London Blues','Spurs','Burnley','Everton','Sunderlands','Leeds'],
 };
 
 const LEVEL_META = {
@@ -145,10 +145,12 @@ function fillSelects() {
 
   // Référence par défaut : London Reds
   const refSel = document.getElementById('team_ref');
-  refSel.value = 'London Reds';
+  refSel.value = localStorage.getItem('team_ref') || 'London Reds';
+  localStorage.setItem('team_ref', refSel.value);
   resetTeams();
 
   refSel.addEventListener('change', () => {
+    localStorage.setItem('team_ref', refSel.value);
     resetTeams();
     renderGoalsGrid(cachedMatches);
     updateAvailableTeams(cachedMatches);
@@ -411,7 +413,8 @@ function renderGoalsGrid(matches) {
     for (let c = 0; c <= 6; c++) {
       const val     = groups[c][r];
       const isLast  = val === maxJournee;
-      html += `<td class="goals-grid-cell${isLast ? ' goals-grid-last' : ''}">${val != null ? val : ''}</td>`;
+      const dcls    = val == null ? '' : val <= 9 ? ' jd-1' : val <= 19 ? ' jd-2' : val <= 29 ? ' jd-3' : ' jd-4';
+      html += `<td class="goals-grid-cell${dcls}${isLast ? ' goals-grid-last' : ''}">${val != null ? val : ''}</td>`;
     }
     html += '</tr>';
   }
@@ -728,10 +731,20 @@ function renderTeamHistory(rows, currentSaison) {
   });
 
   // Ordre décroissant : saison la plus récente en premier
-  container.innerHTML = Object.entries(bySaison).reverse().map(([saison, { buts, date }]) => {
+  const entries = Object.entries(bySaison).reverse();
+  container.innerHTML = entries.map(([saison, { buts, date }], idx) => {
     const isCurrent = saison === currentSaison;
     const dateStr   = date ? new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
-    return `
+
+    // Séparateur si le jour de création change par rapport à la saison précédente
+    let separator = '';
+    if (idx > 0) {
+      const prevDay = entries[idx - 1][1].date ? new Date(entries[idx - 1][1].date).toDateString() : null;
+      const currDay = date ? new Date(date).toDateString() : null;
+      if (prevDay !== currDay) separator = '<hr class="th-separator">';
+    }
+
+    return `${separator}
     <div class="th-row${isCurrent ? ' th-row-current' : ''}">
       <span class="th-saison">${escHtml(saison)} <em class="th-date">(${dateStr})</em>${isCurrent ? ' <span class="th-current-tag">en cours</span>' : ''}</span>
       <div class="th-buts-list">

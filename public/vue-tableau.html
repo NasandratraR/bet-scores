@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BET SCORES — Vue tableau</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">⚽ <span>BET</span>SCORES</div>
+      <div class="header-sub">English League — Vue tableau</div>
+      <nav class="header-nav">
+        <a href="index.html" class="nav-link">Saisie</a>
+        <a href="buts-equipes.html" class="nav-link">Buts</a>
+        <a href="repartition.html" class="nav-link">Répartition</a>
+        <a href="vue-tableau.html" class="nav-link active">Vue tableau</a>
+        <a href="historique.html" class="nav-link">Historique</a>
+        <a href="/bet/index.html" target="_blank" class="nav-link">Calcul</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="be-toolbar">
+      <h1 class="be-title">Vue tableau — Buts par journée</h1>
+      <span id="vtRefLabel" class="saison-label"></span>
+    </div>
+    <div class="vt-filters">
+      <div class="vt-filter-group">
+        <span class="vt-filter-label">Buts</span>
+        <div id="vtFilter" class="vt-filter-bar"></div>
+      </div>
+      <div class="vt-season-dropdown" id="vtTeamDropdown">
+        <button class="vt-season-btn" id="vtTeamBtn">
+          <span id="vtTeamBtnLabel">Toutes les équipes</span>
+          <span class="vt-season-caret">▾</span>
+        </button>
+        <div class="vt-season-panel hidden" id="vtTeamPanel"></div>
+      </div>
+      <div class="vt-season-dropdown" id="vtSeasonDropdown">
+        <button class="vt-season-btn" id="vtSeasonBtn">
+          <span id="vtSeasonBtnLabel">Toutes les saisons</span>
+          <span class="vt-season-caret">▾</span>
+        </button>
+        <div class="vt-season-panel hidden" id="vtSeasonPanel"></div>
+      </div>
+    </div>
+    <div style="overflow-x: auto; margin-top: .8rem;">
+      <div id="vtWrap"></div>
+    </div>
+  </main>
+
+  <script src="vue-tableau.js"></script>
+</body>
+</html>
