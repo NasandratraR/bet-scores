@@ -3,238 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BET SCORES — Saisie de résultats</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>BET SCORES — Ligues</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
   <header>
     <div class="header-inner">
       <div class="logo">⚽ <span>BET</span>SCORES</div>
-      <div class="header-sub">English League — Saisie des résultats</div>
-      <nav class="header-nav">
-        <a href="index.html" class="nav-link active">Saisie</a>
-        <a href="buts-equipes.html" class="nav-link">Buts</a>
-        <a href="repartition.html" class="nav-link">Répartition</a>
-        <a href="vue-tableau.html" class="nav-link">Vue tableau</a>
-        <a href="historique.html" class="nav-link">Historique</a>
-        <a href="/bet/index.html" target="_blank" class="nav-link">Calcul</a>
-      </nav>
+      <div class="header-sub">Sélection de la ligue</div>
     </div>
   </header>
 
-  <main>
-    <div class="layout">
-
-      <!-- COLONNE GAUCHE -->
-      <div class="col-left">
-
-        <!-- Saison en cours -->
-        <section class="card season-card">
-          <div class="season-row">
-            <label for="saison">Saison en cours</label>
-            <input id="saison" type="text" placeholder="ex : 2024-2025" />
-            <button type="button" id="btnEditSaison" class="btn-edit hidden" title="Modifier">✏️</button>
-            <button type="button" id="btnFinirSaison" class="btn-finir hidden">⛔ Finir la saison</button>
-          </div>
-        </section>
-
-        <!-- Équipe de référence -->
-        <section class="card ref-card">
-          <div class="ref-row">
-            <label for="team_ref">Équipe de référence</label>
-            <select id="team_ref">
-              <option value="">-- Aucune --</option>
-            </select>
-          </div>
-        </section>
-
-        <!-- Formulaire de saisie -->
-        <section class="card form-card">
-          <div class="form-card-header">
-            <h2>Nouveau match</h2>
-            <div id="firstLegInfo" class="first-leg-info hidden"></div>
-          </div>
-          <form id="matchForm">
-
-            <div class="field journee-field">
-              <label for="journee">Journée</label>
-              <select id="journee" required>
-                <option value="">-- Choisir --</option>
-              </select>
-            </div>
-
-            <div class="match-row">
-              <div class="field">
-                <label for="team_home">Équipe domicile <span id="levelHome" class="level-badge hidden"></span></label>
-                <select id="team_home" required>
-                  <option value="">-- Choisir --</option>
-                </select>
-              </div>
-
-              <div class="score-block">
-                <select id="score_home" required>
-                  <option value="">-</option>
-                </select>
-                <span class="vs">VS</span>
-                <select id="score_away" required>
-                  <option value="">-</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="team_away">Équipe extérieur <span id="levelAway" class="level-badge hidden"></span></label>
-                <select id="team_away" required>
-                  <option value="">-- Choisir --</option>
-                </select>
-              </div>
-            </div>
-
-            <div id="formMsg" class="msg hidden"></div>
-
-            <button type="submit">⚽ Enregistrer le match</button>
-          </form>
-        </section>
-
-        <!-- Résultats enregistrés -->
-        <section class="card results-card">
-          <div class="table-header">
-            <h2>Résultats enregistrés</h2>
-            <span id="saisonLabel" class="saison-label hidden"></span>
-            <span id="matchCount" class="badge">0</span>
-            <button type="button" id="btnDelJournee" class="btn-del-journee">🗑 Supprimer tout</button>
-          </div>
-          <div id="tableWrap" class="table-wrap">
-            <table id="matchTable">
-              <thead>
-                <tr>
-                  <th>J.</th>
-                  <th>Domicile</th>
-                  <th class="score-col">Score</th>
-                  <th>Extérieur</th>
-                  <th>Résultat</th>
-                  <th class="score-col">Buts</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="matchBody"></tbody>
-            </table>
-            <p id="emptyMsg" class="empty">// AUCUN MATCH ENREGISTRÉ</p>
-          </div>
-        </section>
-
-      </div><!-- /col-left -->
-
-      <!-- COLONNE DROITE -->
-      <div class="col-right">
-        <!-- Stats buts -->
-        <section class="card stats-card">
-          <div class="stats-header">
-            <h2>Total de buts par match</h2>
-            <select id="statSort" class="stats-sort">
-              <option value="default">-- Trier par --</option>
-              <option value="goals">Nombre de buts</option>
-              <option value="interval">Intervalle</option>
-            </select>
-          </div>
-          <div id="statsGoals"></div>
-        </section>
-
-        <!-- Tableau journées par total de buts -->
-        <section class="card goals-grid-card">
-          <div class="goals-grid-header">
-            <h2>Répartition buts</h2>
-            <button type="button" id="btnResume" class="btn-resume">📊 Résumé</button>
-            <button type="button" id="btnButsEquipes" class="btn-resume">⚽ Buts / Équipes</button>
-          </div>
-          <div id="goalsGrid"></div>
-        </section>
-        <!-- Historique buts équipe adverse -->
-        <section class="card team-history-card hidden" id="teamHistoryCard">
-          <div class="team-history-header">
-            <h2>Historique buts</h2>
-            <span id="teamHistoryName" class="team-history-badge"></span>
-          </div>
-          <div id="teamHistoryGoals"></div>
-        </section>
-
-      </div><!-- /col-right -->
-
-    </div><!-- /layout -->
+  <main class="leagues-main">
+    <div class="leagues-container">
+      <div class="leagues-header">
+        <h1 class="leagues-title">Mes ligues</h1>
+        <button type="button" id="btnNewLeague" class="btn-new-league">+ Nouvelle ligue</button>
+      </div>
+      <div id="leaguesList"></div>
+    </div>
   </main>
 
-  <!-- Modale buts / équipes -->
-  <div id="butsModal" class="modal-overlay hidden">
-    <div class="modal modal-large">
-      <div class="modal-header">
-        <h3 id="butsTitle">Buts par équipe</h3>
-        <button type="button" id="butsClose" class="modal-close">✕</button>
-      </div>
-      <div id="butsBody"></div>
-    </div>
-  </div>
-
-  <!-- Modale résumé -->
-  <div id="resumeModal" class="modal-overlay hidden">
-    <div class="modal modal-large">
-      <div class="modal-header">
-        <h3 id="resumeTitle">Résumé de la saison</h3>
-        <button type="button" id="resumeClose" class="modal-close">✕</button>
-      </div>
-      <div id="resumeBody"></div>
-    </div>
-  </div>
-
-  <!-- Modale édition -->
-  <div id="editModal" class="modal-overlay hidden">
+  <!-- Modale : créer / renommer une ligue -->
+  <div id="leagueModal" class="modal-overlay hidden">
     <div class="modal">
       <div class="modal-header">
-        <h3>Modifier le match</h3>
-        <button type="button" id="modalClose" class="modal-close">✕</button>
+        <h3 id="leagueModalTitle">Nouvelle ligue</h3>
+        <button type="button" id="leagueModalClose" class="modal-close">✕</button>
       </div>
-      <form id="editForm">
-        <input type="hidden" id="editId" />
-
-        <div class="field journee-field">
-          <label for="editJournee">Journée</label>
-          <select id="editJournee" required>
-            <option value="">-- Choisir --</option>
-          </select>
+      <form id="leagueForm">
+        <div class="field">
+          <label for="leagueName">Nom de la ligue</label>
+          <input type="text" id="leagueName" placeholder="ex : Premier League" required />
         </div>
-
-        <div class="match-row">
-          <div class="field">
-            <label for="editTeamHome">Équipe domicile</label>
-            <select id="editTeamHome" required>
-              <option value="">-- Choisir --</option>
-            </select>
-          </div>
-
-          <div class="score-block">
-            <select id="editScoreHome" required>
-              <option value="">-</option>
-            </select>
-            <span class="vs">VS</span>
-            <select id="editScoreAway" required>
-              <option value="">-</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="editTeamAway">Équipe extérieur</label>
-            <select id="editTeamAway" required>
-              <option value="">-- Choisir --</option>
-            </select>
-          </div>
+        <div class="field">
+          <label for="leagueNbJournees">Nombre de journées</label>
+          <input type="number" id="leagueNbJournees" min="1" max="100" value="38" required />
         </div>
-
-        <div id="editMsg" class="msg hidden"></div>
-
-        <button type="submit">💾 Sauvegarder</button>
+        <input type="hidden" id="leagueEditId" />
+        <div id="leagueFormMsg" class="msg hidden"></div>
+        <button type="submit" id="leagueFormSubmit">Créer la ligue</button>
       </form>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Modale : gérer les équipes -->
+  <div id="teamsModal" class="modal-overlay hidden">
+    <div class="modal modal-teams">
+      <div class="modal-header">
+        <h3 id="teamsModalTitle">Équipes</h3>
+        <button type="button" id="teamsModalClose" class="modal-close">✕</button>
+      </div>
+      <input type="hidden" id="teamsLeagueId" />
+      <div id="teamsList" class="teams-list"></div>
+      <form id="addTeamForm" class="add-team-form">
+        <div class="add-team-row">
+          <input type="text" id="newTeamName" placeholder="Nom de l'équipe" required />
+          <select id="newTeamLevel">
+            <option value="">-- Niveau --</option>
+            <option value="fort">Fort</option>
+            <option value="moyen">Moyen</option>
+            <option value="faible">Faible</option>
+          </select>
+          <button type="submit" class="btn-add-team">+ Ajouter</button>
+        </div>
+        <div id="addTeamMsg" class="msg hidden"></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/leagues.js"></script>
 </body>
 </html>
