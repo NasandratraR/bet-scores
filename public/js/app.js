@@ -17,6 +17,8 @@ async function main() {
 
   const TEAMS       = teamsData.map(t => t.name).sort();
   const NB_JOURNEES = leagueData.nb_journees || 38;
+  const HALF        = Math.floor(NB_JOURNEES / 2);
+  let   colorMode   = false;
   const teamLevelMap = {};
   teamsData.forEach(t => { if (t.level) teamLevelMap[t.name] = t.level; });
 
@@ -361,9 +363,10 @@ async function main() {
     for (let r = 0; r < maxRows; r++) {
       html += '<tr>';
       for (let c = 0; c <= 6; c++) {
-        const val  = groups[c][r];
-        const dcls = val == null ? '' : val <= 9 ? ' jd-1' : val <= 19 ? ' jd-2' : val <= 29 ? ' jd-3' : ' jd-4';
-        html += `<td class="goals-grid-cell${dcls}${val === maxJournee ? ' goals-grid-last' : ''}">${val != null ? val : ''}</td>`;
+        const val      = groups[c][r];
+        const dcls     = val == null ? '' : val <= 9 ? ' jd-1' : val <= 19 ? ' jd-2' : val <= 29 ? ' jd-3' : ' jd-4';
+        const halfCls  = (colorMode && val != null) ? (val <= HALF ? ' cell-aller' : ' cell-retour') : '';
+        html += `<td class="goals-grid-cell${dcls}${val === maxJournee ? ' goals-grid-last' : ''}${halfCls}">${val != null ? val : ''}</td>`;
       }
       html += '</tr>';
     }
@@ -384,6 +387,10 @@ async function main() {
     const team_home = document.getElementById('team_home').value;
     const team_away = document.getElementById('team_away').value;
     if (team_home === team_away) { showMsg('Les deux équipes ne peuvent pas être identiques.', 'error'); return; }
+    if (currentRefTeam && team_home !== currentRefTeam && team_away !== currentRefTeam) {
+      showMsg(`L'équipe de référence "${currentRefTeam}" doit participer au match.`, 'error');
+      return;
+    }
     const body = {
       league_id: Number(leagueId), saison: currentSaison || null,
       journee: document.getElementById('journee').value, team_home,
@@ -469,17 +476,27 @@ async function main() {
 
   document.getElementById('editForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const id   = document.getElementById('editId').value;
+    const id        = document.getElementById('editId').value;
+    const team_home = document.getElementById('editTeamHome').value;
+    const team_away = document.getElementById('editTeamAway').value;
+    const editMsg   = document.getElementById('editMsg');
+
+    if (currentRefTeam && team_home !== currentRefTeam && team_away !== currentRefTeam) {
+      editMsg.textContent = `L'équipe de référence "${currentRefTeam}" doit participer au match.`;
+      editMsg.className   = 'msg error';
+      return;
+    }
+
     const body = {
       journee:    document.getElementById('editJournee').value,
-      team_home:  document.getElementById('editTeamHome').value,
+      team_home,
       score_home: document.getElementById('editScoreHome').value,
       score_away: document.getElementById('editScoreAway').value,
-      team_away:  document.getElementById('editTeamAway').value,
+      team_away,
     };
     const res  = await fetch(`/api/matches/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
-    if (!res.ok) { const msg = document.getElementById('editMsg'); msg.textContent = data.error; msg.className = 'msg error'; return; }
+    if (!res.ok) { editMsg.textContent = data.error; editMsg.className = 'msg error'; return; }
     closeEditModal(); loadMatches();
   });
 
@@ -601,6 +618,15 @@ async function main() {
   }
 
   // ── INIT ──
+  const btnColorHalf = document.getElementById('btnColorHalf');
+  btnColorHalf.title = `Aller : J1–J${HALF} · Retour : J${HALF+1}–J${NB_JOURNEES}`;
+  btnColorHalf.addEventListener('click', () => {
+    colorMode = !colorMode;
+    btnColorHalf.classList.toggle('btn-color-half-active', colorMode);
+    btnColorHalf.textContent = colorMode ? '🟢 Aller / Retour' : '⬛ Aller / Retour';
+    renderGoalsGrid(cachedMatches);
+  });
+
   initSaison();
   fillSelects();
   loadMatches();

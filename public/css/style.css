@@ -1102,6 +1102,27 @@ tbody td { padding: .55rem .7rem; }
 .vt-hit-3 { background: rgba(245,158,  11, .65); }   /* orange 20–29 */
 .vt-hit-4 { background: rgba(232,121, 160, .65); }   /* rose  30+   */
 
+/* ── COULEURS ALLER / RETOUR ── */
+.cell-aller  { background: rgba(58, 180, 58, 0.18) !important; }
+.cell-retour { background: rgba(58, 159, 212, 0.22) !important; }
+
+.btn-color-half {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 4px;
+  padding: .32rem .75rem;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.btn-color-half:hover         { border-color: var(--green); color: var(--green); }
+.btn-color-half-active        { background: var(--green); color: #fff !important; border-color: var(--green-dk) !important; }
+.btn-color-half-active:hover  { background: var(--green-dk); }
+
 /* ── PAGE RÉPARTITION ── */
 .rep-grid {
   display: grid;

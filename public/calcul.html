@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <title>BET Strategy Predictor</title>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --secondary: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .layout {
+            display: flex;
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .main-content {
+            flex: 2;
+            min-width: 300px;
+        }
+
+        .sidebar {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .stat-card {
+            background: var(--secondary);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            text-align: left;
+            color: #94a3b8;
+            border-bottom: 1px solid #334155;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .profit-pos { color: var(--success); font-weight: bold; }
+        .profit-neg { color: var(--danger); font-weight: bold; }
+        
+        .memo-table td:nth-child(2) {
+            text-align: right;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .memo-table td:nth-child(3) {
+            text-align: right;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .breakeven-row td {
+            border-top: 2px solid var(--danger) !important;
+        }
+
+        .memo-check {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { order: -1; }
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>BET Predictor ⚽</h1>
+
+<div class="layout">
+    <div class="main-content">
+        <div class="card">
+            <div class="input-group">
+                <label>Cote (ex: 3.4)</label>
+                <input type="number" id="odds" value="3.4" step="0.1">
+            </div>
+            <div class="input-group">
+                <label>Mise de base (Ar)</label>
+                <input type="number" id="baseBet" value="1000" step="100">
+            </div>
+            <div class="input-group">
+                <label>Séquence des matchs gagnants (ex: 1, 3, 5, 7, 9, 15)</label>
+                <textarea id="sequence" rows="3" placeholder="Séparez par des virgules">1, 3, 5, 7, 9, 15</textarea>
+            </div>
+            <div class="input-group">
+                <label>Pertes avant le 1er gain (0 = gagné du premier essai)</label>
+                <input type="number" id="lossesBeforeFirst" value="0" min="0" step="1">
+            </div>
+            <div class="input-group">
+                <label>Pertes après le dernier gain (0 = arrêté après la victoire)</label>
+                <input type="number" id="lossesAfterLast" value="0" min="0" step="1">
+            </div>
+            <div class="input-group">
+                <label>Capital de fond (Ar)</label>
+                <input type="number" id="initialCapital" value="20000" step="1000">
+            </div>
+            <button onclick="calculate()">Calculer les profits</button>
+        </div>
+
+        <div id="resultsArea" style="display: none;">
+            <div id="fundAlert" style="display:none; background:#ef444422; border:1px solid var(--danger); border-radius:12px; padding:15px; margin-bottom:20px; color:var(--danger); font-weight:bold;">
+                ⚠️ Fond insuffisant — le capital ne couvre pas toutes les mises de cette série.
+            </div>
+            <div class="summary-grid">
+                <div class="stat-card">
+                    <span style="color: #94a3b8;">Profit Net</span>
+                    <span id="totalProfit" class="stat-value">0 Ar</span>
+                </div>
+                <div class="stat-card">
+                    <span style="color: #94a3b8;">Nouveau Fond</span>
+                    <span id="finalCapital" class="stat-value">0 Ar</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Détail des cycles</h3>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Match</th>
+                                <th>Essai</th>
+                                <th>Mise</th>
+                                <th>Profit Cycle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="card">
+            <h3 style="margin-top:0; color: var(--primary);">📋 Mises</h3>
+            <table class="memo-table">
+                <thead>
+                    <tr>
+                        <th>Essai</th>
+                        <th>Mise (Ar)</th>
+                        <th>Si gagné</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="memoTableBody"></tbody>
+            </table>
+            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 15px;">
+                * "Si gagné" = profit net si on gagne à cet essai (gain − total misé). La ligne rouge marque le seuil de perte.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const STRATEGY_BASE = [1000, 1000, 1100, 1200, 1300, 1500, 1700, 2000, 2400, 2800, 4000];
+
+    function updateMemoTable() {
+        const odds = parseFloat(document.getElementById('odds').value) || 3.4;
+        const baseBet = parseFloat(document.getElementById('baseBet').value) || 1000;
+        const strategy = STRATEGY_BASE.map(m => (m / 1000) * baseBet);
+
+        let cumulativeCost = 0;
+        let firstLossFound = false;
+        let html = '';
+
+        for (let i = 0; i < strategy.length; i++) {
+            cumulativeCost += strategy[i];
+            const gain = strategy[i] * odds;
+            const profit = gain - cumulativeCost;
+            const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
+            const sign = profit >= 0 ? '+' : '';
+            const isBreakeven = !firstLossFound && profit < 0;
+            if (isBreakeven) firstLossFound = true;
+
+            html += `
+                <tr${isBreakeven ? ' class="breakeven-row"' : ''}>
+                    <td>Essai ${i + 1}</td>
+                    <td>${strategy[i].toLocaleString()} Ar</td>
+                    <td class="${profitClass}">${sign}${Math.round(profit).toLocaleString()} Ar</td>
+                    <td style="text-align:center;"><input type="checkbox" class="memo-check"></td>
+                </tr>
+            `;
+        }
+
+        document.getElementById('memoTableBody').innerHTML = html;
+    }
+
+    function calculate() {
+        const odds = parseFloat(document.getElementById('odds').value);
+        const baseBet = parseFloat(document.getElementById('baseBet').value);
+        const initialCapital = parseFloat(document.getElementById('initialCapital').value) || 0;
+        const sequenceInput = document.getElementById('sequence').value;
+        
+        // Supporte les virgules ET les retours à la ligne
+        const matches = sequenceInput.split(/[\n,]+/)
+            .map(s => parseInt(s.trim()))
+            .filter(n => !isNaN(n))
+            .sort((a, b) => a - b);
+
+        if (matches.length < 2) {
+            alert("Veuillez saisir au moins 2 matchs pour calculer les intervalles (ex: 14 puis 15).");
+            return;
+        }
+
+        const lossesBeforeFirst = parseInt(document.getElementById('lossesBeforeFirst').value) || 0;
+        const lossesAfterLast = parseInt(document.getElementById('lossesAfterLast').value) || 0;
+        const currentStrategy = STRATEGY_BASE.map(m => (m / 1000) * baseBet);
+        let totalProfit = 0;
+        let runningCapital = initialCapital;
+        let hasFundIssue = false;
+        let lastMatch = matches[0];
+        let html = '';
+
+        function checkAndBuild(gap, label, isSuffix, isAbandon) {
+            let cycleCost = 0;
+            let cycleProfit = 0;
+            let warning = '';
+            let fundWarning = '';
+
+            const numBets = Math.min(gap, currentStrategy.length);
+            let tempCap = runningCapital;
+            let shortfallAt = -1;
+
+            for (let j = 0; j < numBets; j++) {
+                if (tempCap < currentStrategy[j]) { shortfallAt = j + 1; hasFundIssue = true; break; }
+                tempCap -= currentStrategy[j];
+            }
+
+            if (shortfallAt !== -1) {
+                fundWarning = `<br><span style="color:var(--danger); font-size:0.7rem;">💸 Fond insuffisant à l'essai ${shortfallAt}</span>`;
+            }
+
+            if (gap > currentStrategy.length) {
+                warning = `<br><span style="color:var(--danger); font-size:0.7rem;">⚠️ Perte totale du cycle</span>`;
+                cycleCost = currentStrategy.reduce((a, b) => a + b, 0);
+                cycleProfit = isAbandon ? -cycleCost : -cycleCost;
+            } else {
+                for (let j = 0; j < gap; j++) cycleCost += currentStrategy[j];
+                if (!isAbandon) {
+                    const gain = currentStrategy[gap - 1] * odds;
+                    cycleProfit = gain - cycleCost;
+                } else {
+                    cycleProfit = -cycleCost;
+                }
+            }
+
+            runningCapital += cycleProfit;
+            totalProfit += cycleProfit;
+
+            const profitClass = cycleProfit >= 0 ? 'profit-pos' : 'profit-neg';
+            const miseIdx = Math.min(gap - 1, currentStrategy.length - 1);
+
+            return `
+                <tr>
+                    <td>${label}</td>
+                    <td>${gap > currentStrategy.length ? (currentStrategy.length + '+') : gap}${isSuffix}</td>
+                    <td>${currentStrategy[miseIdx].toLocaleString()} Ar</td>
+                    <td class="${profitClass}">${Math.round(cycleProfit).toLocaleString()} Ar ${warning}${fundWarning}</td>
+                </tr>
+            `;
+        }
+
+        for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
+            const gap = (i === 0) ? (lossesBeforeFirst + 1) : (match - lastMatch);
+            html += checkAndBuild(gap, `Match ${match}`, i === 0 ? ' (Start)' : '', false);
+            lastMatch = match;
+        }
+
+        if (lossesAfterLast > 0) {
+            html += checkAndBuild(lossesAfterLast, 'Abandon', '', true);
+        }
+
+        updateMemoTable();
+        document.getElementById('resultsArea').style.display = 'block';
+        document.getElementById('fundAlert').style.display = hasFundIssue ? 'block' : 'none';
+        document.getElementById('tableBody').innerHTML = html;
+        
+        const profitEl = document.getElementById('totalProfit');
+        profitEl.innerText = Math.round(totalProfit).toLocaleString() + ' Ar';
+        profitEl.className = 'stat-value ' + (totalProfit >= 0 ? 'profit-pos' : 'profit-neg');
+        
+        document.getElementById('finalCapital').innerText = (initialCapital + Math.round(totalProfit)).toLocaleString() + ' Ar';
+    }
+    updateMemoTable();
+</script>
+
+</body>
+</html>
