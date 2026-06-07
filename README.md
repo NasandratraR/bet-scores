@@ -2,6 +2,8 @@
 
 Outil de saisie et d'analyse de scores de paris sportifs, avec support multi-ligues. Chaque ligue dispose de ses propres équipes et saisons.
 
+> Ce projet est en grande partie développé en **vibe coding avec Claude**, mais pas uniquement : étant développeur senior, j'y contribue également directement (revue, architecture, corrections).
+
 ## Prérequis
 
 - Node.js
